@@ -316,7 +316,6 @@ void call_menu() {
 }
 
 int main() {
-
     call_menu();
     return 0;
 }
