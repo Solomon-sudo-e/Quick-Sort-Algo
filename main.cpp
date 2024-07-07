@@ -145,82 +145,155 @@ void print_sorted(int arr[], int size) {
     }
 }
 
-int get_option() {
-    cout << "Welcome to the Quicksort Menu! o7 \nPlease tell me which method of sorting you would like. \n" <<
-         "1) Basic Quicksort\t 2) Dual Pivot Quicksort\n";
-    string option;
-    cin >> option;
-    try {
-        int choice = stoi(option);
-        if(choice != 1 && choice != 2) {
-            cout << "Option much be an integer of either 1, or 2" << endl;
-            get_option();
-        } else {
-            if(choice == 1) {
-                return 1;
-            } else {
-                return 2;
-            }
-        }
-    } catch (exception e) {
-        cout << "Option much be an integer of either 1, or 2" << endl;
-        get_option();
-    }
-    return 0;
+void print_runtime(double time) {
+    ofstream outfile("runtime.txt");
+    outfile << time;
 }
+
+void load_file(int *&numbers, int& size, const string &filename) {
+    ifstream infile(filename);
+    if(!infile) {
+        cout << "Error opening file: " << filename << endl;
+        size = 0;
+        return;
+    }
+
+    //Check memory to avoid segementation fault.
+    if(numbers != nullptr) {
+        delete[] numbers;
+    }
+
+    numbers = new int[size];
+
+    for(int i = 0; i < size; i++) {
+        infile >> numbers[i];
+    }
+
+    infile.close();
+}
+
 void call_menu() {
     bool continueSorting = true;
 
+    //Iterative while loop so that I can initialize variables as I go
     while (continueSorting) {
         cout << "Welcome to the Quicksort Menu!\n";
+        cout << "Please select an option:\n";
+        cout << "1) Input array manually\n";
+        cout << "2) Load array from file\n";
+        cout << "Enter your choice: ";
+
+        //Getting choice
+        int choice;
+        while (!(cin >> choice) || (choice != 1 && choice != 2)) {
+            cout << "Invalid choice. Please enter 1 or 2: ";
+            //Clearing cin flags then filtering out all inputs.
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        }
+
+        int size = 0;
+        int *numbers = nullptr;
+
+        if (choice == 1) {
+            cout << "Enter the size of the array: ";
+            while (!(cin >> size) || size <= 0) {
+                cout << "Invalid size. Please enter a positive integer: ";
+                //Clearing cin flags then filtering out all inputs.
+                cin.clear();
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            }
+
+            numbers = new int[size];
+            cout << "Enter the elements of the array:\n";
+            for (int i = 0; i < size; ++i) {
+                while (!(cin >> numbers[i])) {
+                    cout << "Invalid input. Please enter an integer: ";
+                    //Clearing cin flags then filtering out all inputs.
+                    cin.clear();
+                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                }
+            }
+        } else {
+            cout << "Select file size:\n";
+            cout << "1) 5,000 numbers\n";
+            cout << "2) 10,000 numbers\n";
+            cout << "3) 100,000 numbers\n";
+            cout << "4) 1,000,000 numbers\n";
+            cout << "5) 10,000,000 numbers\n";
+            cout << "6) 100,000,000 numbers\n";
+            cout << "Enter your choice: ";
+
+            int fileChoice;
+            while (!(cin >> fileChoice) || (fileChoice < 1 || fileChoice > 6)) {
+                cout << "Invalid choice. Please enter a number from 1 to 6: ";
+                //Clearing cin flags then filtering out all inputs.
+                cin.clear();
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            }
+
+            string filenames[] = {
+                    "5000file.txt", "10000file.txt", "100000file.txt",
+                    "million.txt", "tenmillion.txt", "hundredmillion.txt"
+            };
+
+            switch(fileChoice) {
+                case 1:
+                    size=5000;
+                    break;
+                case 2:
+                    size=10000;
+                    break;
+                case 3:
+                    size=100000;
+                    break;
+                case 4:
+                    size=1000000;
+                    break;
+                case 5:
+                    size=10000000;
+                    break;
+                case 6:
+                    size=100000000;
+                    break;
+                default:
+                    cout << "invalid size needed..." << endl;
+                    break;
+            }
+
+            load_file(numbers, size, filenames[fileChoice - 1]);
+        }
+
         cout << "Please select a sorting method:\n";
         cout << "1) Basic QuickSort\n";
         cout << "2) Dual Pivot QuickSort\n";
         cout << "Enter your choice: ";
 
-        int choice;
-        while (!(cin >> choice) || (choice != 1 && choice != 2)) {
+        int result;
+        while (!(cin >> result) || (result != 1 && result != 2)) {
             cout << "Invalid choice. Please enter 1 or 2: ";
-            cin.clear(); // Clear error flag
-            cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Discard invalid input
+            //Clearing cin flags then filtering out all inputs.
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
         }
 
-        cout << "Enter the size of the array: ";
-        int size;
-        while (!(cin >> size) || size <= 0) {
-            cout << "Invalid size. Please enter a positive integer: ";
-            cin.clear(); // Clear error flag
-            cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Discard invalid input
-        }
-
-        int* numbers = new int[size];
-        cout << "Enter the elements of the array:\n";
-        for (int i = 0; i < size; ++i) {
-            while (!(cin >> numbers[i])) {
-                cout << "Invalid input. Please enter an integer: ";
-                cin.clear(); // Clear error flag
-                cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Discard invalid input
-            }
-        }
-
-        cout << "Unsorted array: ";
-        for (int i = 0; i < size; ++i) {
-            cout << numbers[i] << " ";
-        }
-        cout << endl;
-
-        if (choice == 1) {
+        print_unsorted(numbers, size);
+        double runtime;
+        if (result == 1) {
+            clock_t timeQuickSort = clock();
             Quicksort(numbers, 0, size - 1);
+            clock_t timeQuickSort2 = clock();
+            runtime = (timeQuickSort2 - timeQuickSort)/(double) CLOCKS_PER_SEC;
         } else {
+            clock_t timeDualPivotQuickSort = clock();
             Dual_Pivot_QuickSort(numbers, 0, size - 1);
+            clock_t timeDualPivotQuickSort2 = clock();
+            runtime = (timeDualPivotQuickSort2 - timeDualPivotQuickSort)/(double) CLOCKS_PER_SEC;
         }
+        print_sorted(numbers, size);
+        print_runtime(runtime);
 
-        cout << "Sorted array: ";
-        for (int i = 0; i < size; ++i) {
-            cout << numbers[i] << " ";
-        }
-        cout << endl;
-
+        //Checking array to see if they want to make another or not.
         cout << "Do you want to sort another array? (y/n): ";
         char repeat;
         cin >> repeat;
@@ -228,19 +301,22 @@ void call_menu() {
         while (repeat != 'y' && repeat != 'n') {
             cout << "Invalid input. Please enter 'y' for yes or 'n' for no: ";
             cin >> repeat;
-            cin.clear(); // Clear error flag
-            cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Discard invalid input
+            //Clearing cin flags then filtering out all inputs.
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
         }
-
+        //Stop while loop
         if (repeat == 'n') {
             continueSorting = false;
         }
 
-        delete[] numbers; // Clean up dynamically allocated array
+        //Delete array
+        delete[] numbers;
     }
 }
 
 int main() {
+
     call_menu();
     return 0;
 }
